@@ -36,7 +36,7 @@
 
   header{
     display:flex;
-    align-items:center;
+    align-items:center;          /* vertical center */
     gap:12px;
     margin-bottom:16px;
     padding:12px 16px;
@@ -44,20 +44,32 @@
     background:linear-gradient(180deg,#85C11B, #90CA29);
     color:#ffffff;
     box-shadow:0 10px 25px rgba(0,0,0,.25);
+    min-height:52px;             /* keeps text visually in the middle of the strip */
   }
 
+  /* Icon-only back button with arrow (Option A), now dark gray */
   .back{
     appearance:none;
-    border:1px solid rgba(255,255,255,.6);
-    background:rgba(0,0,0,.12);
+    border:1px solid #111827;
+    background:#1f2933;          /* dark gray */
     color:#f9fafb;
     border-radius:999px;
-    padding:8px 14px;
+    width:40px;
+    height:40px;
+    padding:0;
     cursor:pointer;
-    font-weight:500;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 4px 10px rgba(0,0,0,.25);
   }
   .back:hover{
-    background:rgba(0,0,0,.22);
+    background:#111827;          /* slightly darker gray on hover */
+    border-color:#111827;
+  }
+  .back svg{
+    width:20px;
+    height:20px;
   }
 
   .title{
@@ -65,6 +77,7 @@
     font-weight:700;
     letter-spacing:.12em;
     text-transform:uppercase;
+    line-height:1.2;             /* helps keep it nicely centered vertically */
   }
 
   .panel{
@@ -232,7 +245,8 @@
   }
 
   .speed-row{
-    padding:0 14px 14px;
+    /* more top padding so “Speed: …” sits in the middle vertically */
+    padding:10px 14px 12px;
     display:flex;
     flex-wrap:wrap;
     gap:8px;
@@ -247,7 +261,7 @@
     appearance:none;
     border:1px solid var(--border);
     background:#f9fafb;
-    color:var(--ink);
+    color:#111827;
     border-radius:999px;
     padding:3px 10px;
     font-size:13px;
@@ -275,7 +289,7 @@
     }
     header{
       flex-wrap:wrap;
-      align-items:flex-start;
+      align-items:center;        /* keep content centered vertically even when wrapping */
       row-gap:8px;
     }
     .title{
@@ -293,7 +307,13 @@
 <body>
 <div class="wrap">
   <header id="header">
-    <button class="back hidden" id="backBtn">🔙 Back to Units</button>
+    <button class="back hidden" id="backBtn" aria-label="Back to Units">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path fill="none" stroke="white" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round"
+              d="M15 4l-8 8 8 8M7 12h13"/>
+      </svg>
+    </button>
     <div class="title" id="headerTitle">ASL | VIETNAMESE</div>
   </header>
 
