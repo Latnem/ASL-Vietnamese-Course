@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Vocabulary Course — EN | VI (Sign + Picture)</title>
+<style>
+  :root{
+    --bg:#ffffff; --card:#fff; --ink:#222; --muted:#6a6a6a; --border:#e8e8ef;
+    --shadow:0 8px 24px rgba(0,0,0,.07); --radius:16px;
+    --brand:#2563eb; --ring: rgba(37,99,235,.25);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+    background:var(--bg);color:var(--ink)
+  }
+  .wrap{max-width:1100px;margin:32px auto;padding:0 16px}
+  header{
+    display:flex;align-items:center;gap:12px;margin-bottom:16px
+  }
+  .back{
+    appearance:none;border:1px solid var(--border);background:#fff;
+    border-radius:10px;padding:8px 12px;cursor:pointer
+  }
+  .back:hover{border-color:var(--brand)}
+  .title{font-size:20px;font-weight:700}
+  .panel{
+    background:var(--card);border:1px solid var(--border);
+    border-radius:var(--radius);box-shadow:var(--shadow)
+  }
+  .units{
+    display:grid;grid-template-columns:repeat(5,1fr);
+    gap:12px;padding:16px
+  }
+  @media (max-width:900px){.units{grid-template-columns:repeat(3,1fr)}}
+  @media (max-width:600px){.units{grid-template-columns:repeat(2,1fr)}}
+  .unit-btn{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    padding:14px 12px;border-radius:12px;border:1px solid var(--border);
+    background:#fafbff;cursor:pointer;font-weight:600
+  }
+  .unit-btn:hover{outline:3px solid var(--ring);background:#fff}
+
+  .unit-page{padding:14px 16px 18px}
+  .unit-head{
+    display:flex;align-items:center;gap:10px;margin:0 0 8px
+  }
+  .unit-head h2{margin:0;font-size:18px;font-weight:800}
+
+  .search-row{
+    display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+    margin:0 0 10px
+  }
+  .search-label{
+    font-size:14px;color:var(--muted);min-width:52px
+  }
+  .search-input{
+    flex:1 1 220px;
+    padding:8px 10px;border-radius:10px;border:1px solid var(--border);
+    font-size:14px
+  }
+  .search-input:focus{
+    outline:2px solid var(--ring);border-color:var(--brand)
+  }
+
+  .entry{
+    border:1px solid var(--border);border-radius:12px;
+    background:#fff;overflow:clip;margin-top:12px
+  }
+  .entry-top{
+    padding:12px 14px;border-bottom:1px dashed var(--border);
+    display:flex;gap:8px;flex-wrap:wrap
+  }
+  .en{font-weight:800}
+  .sep{opacity:.5}
+  .vi{color:#333}
+  .media{
+    display:grid;grid-template-columns:1fr 1fr;
+    gap:14px;padding:14px
+  }
+  .media .box{
+    border:1px solid var(--border);border-radius:10px;overflow:hidden;
+    background:#000;display:flex;align-items:center;justify-content:center;
+    min-height:180px
+  }
+  video{
+    width:100%;height:100%;max-height:320px;background:#000;display:block
+  }
+  iframe{
+    width:100%;height:100%;display:block
+  }
+  img{
+    width:100%;height:100%;object-fit:cover;display:block;background:#f3f4f6
+  }
+  .actions{padding:0 14px 14px}
+  .play{
+    appearance:none;border:1px solid var(--border);background:#fff;
+    border-radius:10px;padding:9px 12px;cursor:pointer;font-weight:600
+  }
+  .play:hover{border-color:var(--brand)}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header id="header">
+    <button class="back hidden" id="backBtn">🔙 Back to Units</button>
+    <div class="title" id="headerTitle">ASL | VIETNAMESE</div>
+  </header>
+
+  <!-- Units view -->
+  <section class="panel" id="unitsView" aria-label="Units">
+    <div class="units">
+      <button class="unit-btn" data-unit="Family">👨‍👩‍👧 Family</button>
+      <button class="unit-btn" data-unit="Food">🍎 Food</button>
+      <button class="unit-btn" data-unit="Schedule">🗓️ Schedule</button>
+      <button class="unit-btn" data-unit="Emotions">😊 Emotions</button>
+      <button class="unit-btn" data-unit="Chores">🧹 Chores</button>
+    </div>
+  </section>
+
+  <!-- Unit page -->
+  <section class="panel hidden" id="unitPage" aria-live="polite">
+    <div class="unit-page">
+      <div class="unit-head">
+        <h2 id="unitTitle">Unit</h2>
+      </div>
+
+      <!-- Search bar -->
+      <div class="search-row">
+        <label for="searchInput" class="search-label">Search</label>
+        <input
+          id="searchInput"
+          class="search-input"
+          type="text"
+          placeholder="Type English or Vietnamese word..."
+          list="vocabSuggestions"
+        />
+        <datalist id="vocabSuggestions"></datalist>
+      </div>
+
+      <div id="entries"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+const PLACEHOLDER_IMG = "https://via.placeholder.com/300x200?text=Picture";
+
+const VOCAB = {
+  Family: [
+    {
+      en:"family",
+      vi:"gia đình",
+      video:"https://youtu.be/SxrxUgeTt00?si=npusJ15TUwgBI9XO",
+      image:"https://i.imgur.com/4UCHCmA.jpeg"
+    },
+    { en:"mom", vi:"mẹ/má/u/mạ", video:"", image:PLACEHOLDER_IMG },
+    { en:"dad", vi:"cha/ba/bố/thầy", video:"", image:PLACEHOLDER_IMG },
+    { en:"boy", vi:"bé trai/cậu bé/thằng nhóc/con trai", video:"", image:PLACEHOLDER_IMG },
+    { en:"girl", vi:"bé gái/cô bé/con nhỏ/con bé/con gái", video:"", image:PLACEHOLDER_IMG },
+    { en:"son", vi:"con trai", video:"", image:PLACEHOLDER_IMG },
+    { en:"daughter", vi:"con gái", video:"", image:PLACEHOLDER_IMG },
+    { en:"child", vi:"con", video:"", image:PLACEHOLDER_IMG },
+    { en:"children", vi:"những đứa con/các con", video:"", image:PLACEHOLDER_IMG },
+    { en:"brother", vi:"anh/anh trai/em trai/anh ruột/em trai ruột", video:"", image:PLACEHOLDER_IMG },
+    { en:"sister", vi:"chị/chị gái/chị ruột/em gái/em gái ruột", video:"", image:PLACEHOLDER_IMG },
+    { en:"aunt", vi:"dì/mợ/thím/bác gái", video:"", image:PLACEHOLDER_IMG },
+    { en:"uncle", vi:"cậu/chú/bác trai", video:"", image:PLACEHOLDER_IMG },
+    { en:"female cousin", vi:"chị họ/em gái họ", video:"", image:PLACEHOLDER_IMG },
+    { en:"male cousin", vi:"anh họ/em trai họ", video:"", image:PLACEHOLDER_IMG },
+    { en:"grandma", vi:"bà ngoại/bà nội", video:"", image:PLACEHOLDER_IMG },
+    { en:"grandpa", vi:"ông ngoại/ông nội", video:"", image:PLACEHOLDER_IMG },
+    { en:"who", vi:"ai/người mà", video:"", image:PLACEHOLDER_IMG },
+  ],
+  Food: [
+    { en:"meat", vi:"thịt", video:"", image:PLACEHOLDER_IMG },
+    { en:"pork", vi:"thịt heo", video:"", image:PLACEHOLDER_IMG },
+    { en:"chicken", vi:"thịt gà/con gà", video:"", image:PLACEHOLDER_IMG },
+    { en:"beef", vi:"thịt bò", video:"", image:PLACEHOLDER_IMG },
+    { en:"fish", vi:"cá", video:"", image:PLACEHOLDER_IMG },
+    { en:"duck", vi:"thịt vịt/con vịt", video:"", image:PLACEHOLDER_IMG },
+    { en:"shrimp", vi:"tôm", video:"", image:PLACEHOLDER_IMG },
+    { en:"vegetables", vi:"rau củ quả", video:"", image:PLACEHOLDER_IMG },
+    { en:"cabbage", vi:"bắp cải/cải nồi", video:"", image:PLACEHOLDER_IMG },
+    { en:"carrots", vi:"cà rốt", video:"", image:PLACEHOLDER_IMG },
+    { en:"onion", vi:"hành tây", video:"", image:PLACEHOLDER_IMG },
+    { en:"fruit", vi:"trái cây", video:"", image:PLACEHOLDER_IMG },
+    { en:"mango", vi:"trái xoài", video:"", image:PLACEHOLDER_IMG },
+    { en:"banana", vi:"trái chuối", video:"", image:PLACEHOLDER_IMG },
+    { en:"pineapple", vi:"trái thơm/trái dứa", video:"", image:PLACEHOLDER_IMG },
+    { en:"papaya", vi:"trái đu đủ", video:"", image:PLACEHOLDER_IMG },
+    { en:"coconut", vi:"trái dừa", video:"", image:PLACEHOLDER_IMG },
+    { en:"rice", vi:"cơm", video:"", image:PLACEHOLDER_IMG },
+    { en:"noodles", vi:"mì/bún/miến/phở/bánh canh/hủ tíu", video:"", image:PLACEHOLDER_IMG },
+    { en:"sweetened condensed milk", vi:"sữa đặc", video:"", image:PLACEHOLDER_IMG },
+    { en:"milk", vi:"sữa", video:"", image:PLACEHOLDER_IMG },
+    { en:"yogurt", vi:"sữa chua/da-ua", video:"", image:PLACEHOLDER_IMG },
+    { en:"butter", vi:"bơ", video:"", image:PLACEHOLDER_IMG },
+    { en:"breakfast", vi:"bữa sáng", video:"", image:PLACEHOLDER_IMG },
+    { en:"lunch", vi:"bữa trưa", video:"", image:PLACEHOLDER_IMG },
+    { en:"dinner", vi:"bữa tối", video:"", image:PLACEHOLDER_IMG },
+    { en:"what", vi:"cái gì/cái mà", video:"", image:PLACEHOLDER_IMG },
+  ],
+  Schedule: [
+    { en:"minute", vi:"phút", video:"", image:PLACEHOLDER_IMG },
+    { en:"hour", vi:"giờ", video:"", image:PLACEHOLDER_IMG },
+    { en:"day", vi:"ngày", video:"", image:PLACEHOLDER_IMG },
+    { en:"week", vi:"tuần", video:"", image:PLACEHOLDER_IMG },
+    { en:"month", vi:"tháng", video:"", image:PLACEHOLDER_IMG },
+    { en:"year", vi:"năm", video:"", image:PLACEHOLDER_IMG },
+    { en:"1:00", vi:"một giờ", video:"", image:PLACEHOLDER_IMG },
+    { en:"2:00", vi:"hai giờ", video:"", image:PLACEHOLDER_IMG },
+    { en:"3:00", vi:"ba giờ", video:"", image:PLACEHOLDER_IMG },
+    { en:"4:00", vi:"bốn giờ", video:"", image:PLACEHOLDER_IMG },
+    { en:"5:00", vi:"năm giờ", video:"", image:PLACEHOLDER_IMG },
+    { en:"6:00", vi:"sáu giờ", video:"", image:PLACEHOLDER_IMG },
+    { en:"7:00", vi:"bảy giờ", video:"", image:PLACEHOLDER_IMG },
+    { en:"8:00", vi:"tám giờ", video:"", image:PLACEHOLDER_IMG },
+    { en:"9:00", vi:"chín giờ", video:"", image:PLACEHOLDER_IMG },
+    { en:"10:00", vi:"mười giờ", video:"", image:PLACEHOLDER_IMG },
+    { en:"11:00", vi:"mười một giờ", video:"", image:PLACEHOLDER_IMG },
+    { en:"12:00", vi:"mười hai giờ", video:"", image:PLACEHOLDER_IMG },
+    { en:"noon", vi:"giữa trưa", video:"", image:PLACEHOLDER_IMG },
+    { en:"midnight", vi:"nửa đêm", video:"", image:PLACEHOLDER_IMG },
+    { en:"morning", vi:"buổi sáng", video:"", image:PLACEHOLDER_IMG },
+    { en:"afternoon", vi:"buổi trưa", video:"", image:PLACEHOLDER_IMG },
+    { en:"evening", vi:"buổi chiều", video:"", image:PLACEHOLDER_IMG },
+    { en:"am", vi:"giờ sáng", video:"", image:PLACEHOLDER_IMG },
+    { en:"pm", vi:"giờ tối/giờ chiều", video:"", image:PLACEHOLDER_IMG },
+    { en:"past", vi:"qua/rưỡi", video:"", image:PLACEHOLDER_IMG },
+    { en:"yesterday", vi:"hôm qua", video:"", image:PLACEHOLDER_IMG },
+    { en:"2 weeks ago", vi:"hai tuần trước", video:"", image:PLACEHOLDER_IMG },
+    { en:"last month", vi:"tháng trước", video:"", image:PLACEHOLDER_IMG },
+    { en:"last year", vi:"năm trước", video:"", image:PLACEHOLDER_IMG },
+    { en:"now", vi:"bây giờ/lúc này", video:"", image:PLACEHOLDER_IMG },
+    { en:"today", vi:"hôm nay", video:"", image:PLACEHOLDER_IMG },
+    { en:"this morning", vi:"sáng nay", video:"", image:PLACEHOLDER_IMG },
+    { en:"this afternoon", vi:"trưa nay", video:"", image:PLACEHOLDER_IMG },
+    { en:"today at 7:00pm", vi:"hôm nay lúc 7 giờ tối", video:"", image:PLACEHOLDER_IMG },
+    { en:"future", vi:"tương lai", video:"", image:PLACEHOLDER_IMG },
+    { en:"tomorrow", vi:"ngày mai", video:"", image:PLACEHOLDER_IMG },
+    { en:"in 2 weeks", vi:"trong 2 tuần/sau 2 tuần/2 tuần nữa", video:"", image:PLACEHOLDER_IMG },
+    { en:"next month", vi:"tháng sau", video:"", image:PLACEHOLDER_IMG },
+    { en:"in a year", vi:"trong 1 năm", video:"", image:PLACEHOLDER_IMG },
+    { en:"when", vi:"khi mà/lúc mà", video:"", image:PLACEHOLDER_IMG },
+    { en:"what-do", vi:"làm gì", video:"", image:PLACEHOLDER_IMG },
+  ],
+  Emotions: [
+    { en:"happy",      vi:"vui vẻ/hạnh phúc",             video:"", image:PLACEHOLDER_IMG },
+    { en:"sad",        vi:"buồn/không vui",               video:"", image:PLACEHOLDER_IMG },
+    { en:"angry",      vi:"giận/tức",                     video:"", image:PLACEHOLDER_IMG },
+    { en:"embarrassed",vi:"xấu hổ/quê/nhục",              video:"", image:PLACEHOLDER_IMG },
+    { en:"scared",     vi:"sợ hãi",                       video:"", image:PLACEHOLDER_IMG },
+    { en:"anxious",    vi:"lo lắng",                      video:"", image:PLACEHOLDER_IMG },
+    { en:"surprised",  vi:"bất ngờ",                      video:"", image:PLACEHOLDER_IMG },
+    { en:"lonely",     vi:"cô đơn",                       video:"", image:PLACEHOLDER_IMG },
+    { en:"brave",      vi:"dũng cảm",                     video:"", image:PLACEHOLDER_IMG },
+    { en:"proud",      vi:"tự hào",                       video:"", image:PLACEHOLDER_IMG },
+    { en:"depressed",  vi:"não nề/trầm cảm",              video:"", image:PLACEHOLDER_IMG },
+    { en:"suffering",  vi:"chịu đựng",                    video:"", image:PLACEHOLDER_IMG },
+    { en:"upset",      vi:"không vui",                    video:"", image:PLACEHOLDER_IMG },
+    { en:"jealous",    vi:"ghen tị",                      video:"", image:PLACEHOLDER_IMG },
+    { en:"silly",      vi:"ngốc nghếch/buồn cười",        video:"", image:PLACEHOLDER_IMG },
+    { en:"funny",      vi:"vui/mắc cười",                 video:"", image:PLACEHOLDER_IMG },
+    { en:"sick",       vi:"bệnh",                         video:"", image:PLACEHOLDER_IMG },
+    { en:"good",       vi:"tốt/giỏi",                     video:"", image:PLACEHOLDER_IMG },
+    { en:"bad",        vi:"tệ/không tốt/dở",              video:"", image:PLACEHOLDER_IMG },
+    { en:"why",        vi:"vì sao",                       video:"", image:PLACEHOLDER_IMG },
+  ],
+  Chores: [
+    { en:"chores",            vi:"việc nhà",                                          video:"", image:PLACEHOLDER_IMG },
+    { en:"make bed",          vi:"dọn giường",                                       video:"", image:PLACEHOLDER_IMG },
+    { en:"wash mirror",       vi:"chùi gương/lau gương/lau kính",                   video:"", image:PLACEHOLDER_IMG },
+    { en:"laundry",           vi:"giặt/giặt giũ/giặt là",                            video:"", image:PLACEHOLDER_IMG },
+    { en:"feed animals",      vi:"cho thú ăn/cho động vật ăn",                       video:"", image:PLACEHOLDER_IMG },
+    { en:"clean",             vi:"dọn/lau",                                          video:"", image:PLACEHOLDER_IMG },
+    { en:"kitchen",           vi:"nhà bếp",                                          video:"", image:PLACEHOLDER_IMG },
+    { en:"bathroom",          vi:"phòng tắm",                                        video:"", image:PLACEHOLDER_IMG },
+    { en:"bedroom",           vi:"phòng ngủ",                                       video:"", image:PLACEHOLDER_IMG },
+    { en:"living room",       vi:"phòng khách",                                      video:"", image:PLACEHOLDER_IMG },
+    { en:"take out trash",    vi:"đổ rác/vứt rác",                                   video:"", image:PLACEHOLDER_IMG },
+    { en:"dust",              vi:"bụi",                                             video:"", image:PLACEHOLDER_IMG },
+    { en:"empty dishwasher",  vi:"dỡ bát đĩa/lấy chén đĩa ra khỏi máy rửa chén",     video:"", image:PLACEHOLDER_IMG },
+    { en:"cleanout fridge",   vi:"dọn tủ lạnh",                                      video:"", image:PLACEHOLDER_IMG },
+    { en:"change bed sheets", vi:"thay ga giường",                                   video:"", image:PLACEHOLDER_IMG },
+    { en:"vacuum house",      vi:"hút bụi trong nhà",                                video:"", image:PLACEHOLDER_IMG },
+    { en:"clean cupbards",    vi:"dọn tủ chén/dọn tủ bát",                           video:"", image:PLACEHOLDER_IMG },
+    { en:"sweep",             vi:"quét",                                            video:"", image:PLACEHOLDER_IMG },
+    { en:"mop",               vi:"lau",                                             video:"", image:PLACEHOLDER_IMG },
+    { en:"wash dishes",       vi:"rửa chén/rửa bát",                                 video:"", image:PLACEHOLDER_IMG },
+  ],
+};
+
+const unitsView = document.getElementById("unitsView");
+const unitPage  = document.getElementById("unitPage");
+const entriesEl = document.getElementById("entries");
+const unitTitle = document.getElementById("unitTitle");
+const backBtn   = document.getElementById("backBtn");
+const headerTitle = document.getElementById("headerTitle");
+const searchInput = document.getElementById("searchInput");
+const suggestions = document.getElementById("vocabSuggestions");
+
+document.querySelector(".units").addEventListener("click", e=>{
+  const btn = e.target.closest(".unit-btn"); if(!btn) return;
+  openUnit(btn.dataset.unit);
+});
+backBtn.addEventListener("click", ()=>showUnits());
+
+function showUnits(){
+  unitPage.classList.add("hidden");
+  unitsView.classList.remove("hidden");
+  backBtn.classList.add("hidden");
+  headerTitle.textContent = "ASL | VIETNAMESE";
+  searchInput.value = "";
+}
+
+function openUnit(name){
+  unitsView.classList.add("hidden");
+  unitPage.classList.remove("hidden");
+  backBtn.classList.remove("hidden");
+  headerTitle.textContent = "ASL | VIETNAMESE";
+  unitTitle.textContent = name + " Vocabulary";
+  searchInput.value = "";
+  renderEntries(name);
+  try{ localStorage.setItem("lastUnit", name); }catch(e){}
+}
+
+// Auto-open last unit if exists
+try{
+  const last = localStorage.getItem("lastUnit");
+  if(last && VOCAB[last]?.length){ openUnit(last); }
+}catch(e){}
+
+/* ---------- YOUTUBE HELPERS ---------- */
+function isYouTubeUrl(url){
+  if(!url) return false;
+  return url.includes("youtube.com") || url.includes("youtu.be");
+}
+
+function toYouTubeEmbed(url){
+  if(!url) return "";
+  if(url.includes("youtu.be/")){
+    const after = url.split("youtu.be/")[1];
+    const id = after.split(/[?&]/)[0];
+    return "https://www.youtube.com/embed/" + id;
+  }
+  if(url.includes("watch?v=")){
+    const after = url.split("watch?v=")[1];
+    const id = after.split(/[?&]/)[0];
+    return "https://www.youtube.com/embed/" + id;
+  }
+  return url;
+}
+
+/* ---------- RENDER & SEARCH ---------- */
+function renderEntries(unitName){
+  const list = VOCAB[unitName] || [];
+  entriesEl.innerHTML = "";
+  updateSuggestions(list);
+
+  if(!list.length){
+    entriesEl.innerHTML = `<div style="padding:12px;color:#555">
+      No vocabulary added yet for <b>${escapeHTML(unitName)}</b>.
+    </div>`;
+    return;
+  }
+
+  list.forEach(item=>{
+    const { en="", vi="", video="", image="" } = item;
+    const card = document.createElement("div");
+    card.className = "entry";
+    card.dataset.en = en.toLowerCase();
+    card.dataset.vi = vi.toLowerCase();
+
+    const top = document.createElement("div");
+    top.className = "entry-top";
+    top.innerHTML =
+      `<span class="en">${escapeHTML(en)}</span>
+       <span class="sep">—</span>
+       <span class="vi">${escapeHTML(vi)}</span>`;
+
+    const media = document.createElement("div");
+    media.className = "media";
+
+    const vbox = document.createElement("div");
+    vbox.className = "box";
+
+    const isYT = isYouTubeUrl(video);
+    let vid = null;
+    let iframe = null;
+    let embedUrl = "";
+
+    if(isYT){
+      embedUrl = toYouTubeEmbed(video);
+      iframe = document.createElement("iframe");
+      iframe.src = embedUrl;
+      iframe.setAttribute("frameborder","0");
+      iframe.setAttribute("allow","accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture");
+      iframe.allowFullscreen = true;
+      vbox.appendChild(iframe);
+    }else{
+      vid = document.createElement("video");
+      vid.controls = true;
+      if(video) vid.src = video;
+      vbox.appendChild(vid);
+    }
+
+    const pbox = document.createElement("div");
+    pbox.className = "box";
+    const img = document.createElement("img");
+    img.alt = `Picture for ${en}`;
+    img.src = image || PLACEHOLDER_IMG;
+    pbox.appendChild(img);
+
+    media.append(vbox, pbox);
+
+    const actions = document.createElement("div");
+    actions.className = "actions";
+    const play = document.createElement("button");
+    play.className = "play";
+    play.textContent = "▶ Play Sign";
+
+    play.addEventListener("click", ()=>{
+      if(!video){
+        if(!isYT && vid){
+          vid.pause(); vid.removeAttribute("src"); vid.load();
+        }
+        alert("No video linked yet for this word.");
+        return;
+      }
+      if(isYT && iframe){
+        const url = embedUrl || iframe.src || toYouTubeEmbed(video);
+        const sep = url.includes("?") ? "&" : "?";
+        iframe.src = url + sep + "autoplay=1";
+      }else if(vid){
+        vid.src = video;
+        vid.play().catch(()=>{});
+      }
+    });
+
+    actions.appendChild(play);
+
+    card.append(top, media, actions);
+    entriesEl.appendChild(card);
+  });
+}
+
+// Build datalist suggestions (EN + VI)
+function updateSuggestions(list){
+  suggestions.innerHTML = "";
+  const seen = new Set();
+  list.forEach(({en="",vi=""})=>{
+    [en,vi].forEach(term=>{
+      if(!term) return;
+      const trimmed = term.trim();
+      const key = trimmed.toLowerCase();
+      if(trimmed && !seen.has(key)){
+        const opt = document.createElement("option");
+        opt.value = trimmed;
+        suggestions.appendChild(opt);
+        seen.add(key);
+      }
+    });
+  });
+}
+
+// Live filter on input (English or Vietnamese)
+searchInput.addEventListener("input", ()=>{
+  const q = searchInput.value.trim().toLowerCase();
+  filterEntries(q);
+});
+
+function filterEntries(q){
+  const cards = entriesEl.querySelectorAll(".entry");
+  if(!q){
+    cards.forEach(c=> c.style.display = "");
+    return;
+  }
+  cards.forEach(c=>{
+    const en = c.dataset.en || "";
+    const vi = c.dataset.vi || "";
+    if(en.includes(q) || vi.includes(q)){
+      c.style.display = "";
+    }else{
+      c.style.display = "none";
+    }
+  });
+}
+
+/* ---------- UTIL ---------- */
+function escapeHTML(s){
+  return String(s).replace(/[&<>\"']/g, m => ({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    "\"":"&quot;",
+    "'":"&#039;"
+  }[m]));
+}
+</script>
+</body>
+</html>
