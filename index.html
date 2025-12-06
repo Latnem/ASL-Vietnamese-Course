@@ -94,12 +94,28 @@
   img{
     width:100%;height:100%;object-fit:cover;display:block;background:#f3f4f6
   }
-  .actions{padding:0 14px 14px}
-  .play{
-    appearance:none;border:1px solid var(--border);background:#fff;
-    border-radius:10px;padding:9px 12px;cursor:pointer;font-weight:600
+
+  .speed-row{
+    padding:0 14px 14px;
+    display:flex;flex-wrap:wrap;gap:8px;align-items:center
   }
-  .play:hover{border-color:var(--brand)}
+  .speed-label{
+    font-size:13px;color:var(--muted)
+  }
+  .speed-btn{
+    appearance:none;
+    border:1px solid var(--border);
+    background:#fff;
+    border-radius:999px;
+    padding:3px 10px;
+    font-size:13px;
+    cursor:pointer;
+  }
+  .speed-btn.active{
+    border-color:var(--brand);
+    background:rgba(37,99,235,.06);
+    font-weight:600;
+  }
   .hidden{display:none}
 </style>
 </head>
@@ -110,7 +126,7 @@
     <div class="title" id="headerTitle">ASL | VIETNAMESE</div>
   </header>
 
-  <!-- Units view -->
+  <!-- Units view (default) -->
   <section class="panel" id="unitsView" aria-label="Units">
     <div class="units">
       <button class="unit-btn" data-unit="Family">👨‍👩‍👧 Family</button>
@@ -131,13 +147,9 @@
       <!-- Search bar -->
       <div class="search-row">
         <label for="searchInput" class="search-label">Search</label>
-        <input
-          id="searchInput"
-          class="search-input"
-          type="text"
+        <input id="searchInput" class="search-input" type="text"
           placeholder="Type English or Vietnamese word..."
-          list="vocabSuggestions"
-        />
+          list="vocabSuggestions"/>
         <datalist id="vocabSuggestions"></datalist>
       </div>
 
@@ -155,7 +167,7 @@ const VOCAB = {
       en:"family",
       vi:"gia đình",
       video:"https://youtu.be/SxrxUgeTt00?si=npusJ15TUwgBI9XO",
-      image:"https://i.imgur.com/4UCHCmA.jpeg"
+      image:"https://via.placeholder.com/300x200?text=Family"
     },
     { en:"mom", vi:"mẹ/má/u/mạ", video:"", image:PLACEHOLDER_IMG },
     { en:"dad", vi:"cha/ba/bố/thầy", video:"", image:PLACEHOLDER_IMG },
@@ -175,6 +187,7 @@ const VOCAB = {
     { en:"grandpa", vi:"ông ngoại/ông nội", video:"", image:PLACEHOLDER_IMG },
     { en:"who", vi:"ai/người mà", video:"", image:PLACEHOLDER_IMG },
   ],
+
   Food: [
     { en:"meat", vi:"thịt", video:"", image:PLACEHOLDER_IMG },
     { en:"pork", vi:"thịt heo", video:"", image:PLACEHOLDER_IMG },
@@ -204,6 +217,7 @@ const VOCAB = {
     { en:"dinner", vi:"bữa tối", video:"", image:PLACEHOLDER_IMG },
     { en:"what", vi:"cái gì/cái mà", video:"", image:PLACEHOLDER_IMG },
   ],
+
   Schedule: [
     { en:"minute", vi:"phút", video:"", image:PLACEHOLDER_IMG },
     { en:"hour", vi:"giờ", video:"", image:PLACEHOLDER_IMG },
@@ -248,6 +262,7 @@ const VOCAB = {
     { en:"when", vi:"khi mà/lúc mà", video:"", image:PLACEHOLDER_IMG },
     { en:"what-do", vi:"làm gì", video:"", image:PLACEHOLDER_IMG },
   ],
+
   Emotions: [
     { en:"happy",      vi:"vui vẻ/hạnh phúc",             video:"", image:PLACEHOLDER_IMG },
     { en:"sad",        vi:"buồn/không vui",               video:"", image:PLACEHOLDER_IMG },
@@ -270,6 +285,7 @@ const VOCAB = {
     { en:"bad",        vi:"tệ/không tốt/dở",              video:"", image:PLACEHOLDER_IMG },
     { en:"why",        vi:"vì sao",                       video:"", image:PLACEHOLDER_IMG },
   ],
+
   Chores: [
     { en:"chores",            vi:"việc nhà",                                          video:"", image:PLACEHOLDER_IMG },
     { en:"make bed",          vi:"dọn giường",                                       video:"", image:PLACEHOLDER_IMG },
@@ -325,16 +341,9 @@ function openUnit(name){
   unitTitle.textContent = name + " Vocabulary";
   searchInput.value = "";
   renderEntries(name);
-  try{ localStorage.setItem("lastUnit", name); }catch(e){}
 }
 
-// Auto-open last unit if exists
-try{
-  const last = localStorage.getItem("lastUnit");
-  if(last && VOCAB[last]?.length){ openUnit(last); }
-}catch(e){}
-
-/* ---------- YOUTUBE HELPERS ---------- */
+/* ---------- YOUTUBE HELP ---------- */
 function isYouTubeUrl(url){
   if(!url) return false;
   return url.includes("youtube.com") || url.includes("youtu.be");
@@ -342,20 +351,28 @@ function isYouTubeUrl(url){
 
 function toYouTubeEmbed(url){
   if(!url) return "";
+  let id = "";
   if(url.includes("youtu.be/")){
     const after = url.split("youtu.be/")[1];
-    const id = after.split(/[?&]/)[0];
-    return "https://www.youtube.com/embed/" + id;
-  }
-  if(url.includes("watch?v=")){
+    id = after.split(/[?&]/)[0];
+  }else if(url.includes("watch?v=")){
     const after = url.split("watch?v=")[1];
-    const id = after.split(/[?&]/)[0];
-    return "https://www.youtube.com/embed/" + id;
+    id = after.split(/[?&]/)[0];
   }
-  return url;
+  if(!id) return url;
+  return "https://www.youtube.com/embed/" + id + "?enablejsapi=1";
 }
 
-/* ---------- RENDER & SEARCH ---------- */
+function setYouTubeSpeed(iframe, rate){
+  if(!iframe || !iframe.contentWindow) return;
+  iframe.contentWindow.postMessage(JSON.stringify({
+    event: "command",
+    func: "setPlaybackRate",
+    args: [rate]
+  }), "*");
+}
+
+/* ---------- RENDER ---------- */
 function renderEntries(unitName){
   const list = VOCAB[unitName] || [];
   entriesEl.innerHTML = "";
@@ -363,13 +380,14 @@ function renderEntries(unitName){
 
   if(!list.length){
     entriesEl.innerHTML = `<div style="padding:12px;color:#555">
-      No vocabulary added yet for <b>${escapeHTML(unitName)}</b>.
+      No vocabulary yet for <b>${escapeHTML(unitName)}</b>.
     </div>`;
     return;
   }
 
   list.forEach(item=>{
     const { en="", vi="", video="", image="" } = item;
+
     const card = document.createElement("div");
     card.className = "entry";
     card.dataset.en = en.toLowerCase();
@@ -391,15 +409,12 @@ function renderEntries(unitName){
     const isYT = isYouTubeUrl(video);
     let vid = null;
     let iframe = null;
-    let embedUrl = "";
 
     if(isYT){
-      embedUrl = toYouTubeEmbed(video);
       iframe = document.createElement("iframe");
-      iframe.src = embedUrl;
-      iframe.setAttribute("frameborder","0");
-      iframe.setAttribute("allow","accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture");
+      iframe.src = toYouTubeEmbed(video);
       iframe.allowFullscreen = true;
+      iframe.setAttribute("allow","accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture");
       vbox.appendChild(iframe);
     }else{
       vid = document.createElement("video");
@@ -417,49 +432,59 @@ function renderEntries(unitName){
 
     media.append(vbox, pbox);
 
-    const actions = document.createElement("div");
-    actions.className = "actions";
-    const play = document.createElement("button");
-    play.className = "play";
-    play.textContent = "▶ Play Sign";
+    // Speed controls
+    const controls = document.createElement("div");
+    controls.className = "speed-row";
+    const label = document.createElement("span");
+    label.className = "speed-label";
+    label.textContent = "Speed:";
+    controls.appendChild(label);
 
-    play.addEventListener("click", ()=>{
-      if(!video){
-        if(!isYT && vid){
-          vid.pause(); vid.removeAttribute("src"); vid.load();
+    const speeds = [0.25, 0.50, 0.75, 1.0];
+    speeds.forEach(rate=>{
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "speed-btn";
+      btn.textContent =
+        rate === 1 ? "1.00x" :
+        rate === 0.75 ? "0.75x" :
+        rate === 0.5 ? "0.50x" :
+        "0.25x";
+
+      if(rate === 1.0) btn.classList.add("active");
+
+      btn.addEventListener("click", ()=>{
+        controls.querySelectorAll(".speed-btn")
+          .forEach(b=> b.classList.remove("active"));
+        btn.classList.add("active");
+
+        if(isYT && iframe){
+          setYouTubeSpeed(iframe, rate);
+        }else if(vid){
+          vid.playbackRate = rate;
         }
-        alert("No video linked yet for this word.");
-        return;
-      }
-      if(isYT && iframe){
-        const url = embedUrl || iframe.src || toYouTubeEmbed(video);
-        const sep = url.includes("?") ? "&" : "?";
-        iframe.src = url + sep + "autoplay=1";
-      }else if(vid){
-        vid.src = video;
-        vid.play().catch(()=>{});
-      }
+      });
+
+      controls.appendChild(btn);
     });
 
-    actions.appendChild(play);
-
-    card.append(top, media, actions);
+    card.append(top, media, controls);
     entriesEl.appendChild(card);
   });
 }
 
-// Build datalist suggestions (EN + VI)
+/* ---------- SEARCH ---------- */
 function updateSuggestions(list){
   suggestions.innerHTML = "";
   const seen = new Set();
   list.forEach(({en="",vi=""})=>{
-    [en,vi].forEach(term=>{
-      if(!term) return;
-      const trimmed = term.trim();
-      const key = trimmed.toLowerCase();
-      if(trimmed && !seen.has(key)){
+    [en,vi].forEach(word=>{
+      if(!word) return;
+      const value = word.trim();
+      const key = value.toLowerCase();
+      if(!seen.has(key)){
         const opt = document.createElement("option");
-        opt.value = trimmed;
+        opt.value = value;
         suggestions.appendChild(opt);
         seen.add(key);
       }
@@ -467,7 +492,6 @@ function updateSuggestions(list){
   });
 }
 
-// Live filter on input (English or Vietnamese)
 searchInput.addEventListener("input", ()=>{
   const q = searchInput.value.trim().toLowerCase();
   filterEntries(q);
@@ -475,29 +499,18 @@ searchInput.addEventListener("input", ()=>{
 
 function filterEntries(q){
   const cards = entriesEl.querySelectorAll(".entry");
-  if(!q){
-    cards.forEach(c=> c.style.display = "");
-    return;
-  }
+  if(!q){ cards.forEach(c=> c.style.display=""); return; }
   cards.forEach(c=>{
     const en = c.dataset.en || "";
     const vi = c.dataset.vi || "";
-    if(en.includes(q) || vi.includes(q)){
-      c.style.display = "";
-    }else{
-      c.style.display = "none";
-    }
+    c.style.display = (en.includes(q) || vi.includes(q)) ? "" : "none";
   });
 }
 
 /* ---------- UTIL ---------- */
 function escapeHTML(s){
   return String(s).replace(/[&<>\"']/g, m => ({
-    "&":"&amp;",
-    "<":"&lt;",
-    ">":"&gt;",
-    "\"":"&quot;",
-    "'":"&#039;"
+    "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"
   }[m]));
 }
 </script>
