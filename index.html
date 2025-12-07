@@ -153,9 +153,16 @@
     min-width:52px;
   }
 
-  /* UNDERLINE-ONLY SEARCH INPUT (Option E) */
-  .search-input{
+  .search-input-wrap{
     flex:1 1 220px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+
+  /* UNDERLINE-ONLY SEARCH INPUT */
+  .search-input{
+    flex:1 1 auto;
     padding:5px 0 4px 0;
     border:none;
     border-bottom:2px solid var(--border);
@@ -171,6 +178,38 @@
     outline:none;
     border-bottom-color:var(--brand);
     background:transparent;
+  }
+
+  /* Mic button (speech search) */
+  .mic-btn{
+    flex:0 0 auto;
+    appearance:none;
+    border-radius:999px;
+    border:1px solid var(--border);
+    width:34px;
+    height:34px;
+    padding:0;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    background:#f9fafb;
+  }
+  .mic-btn svg{
+    width:18px;
+    height:18px;
+    fill:#4b5563;
+  }
+  .mic-btn:hover{
+    border-color:var(--brand);
+    background:#eef6d9;
+  }
+  .mic-btn.listening{
+    border-color:#b91c1c;
+    background:#fee2e2;
+  }
+  .mic-btn.listening svg{
+    fill:#b91c1c;
   }
 
   .entry{
@@ -334,8 +373,16 @@
 
       <div class="search-row">
         <label for="searchInput" class="search-label">Search</label>
-        <input id="searchInput" class="search-input" type="text"
-          placeholder="Search English or Vietnamese word…"/>
+        <div class="search-input-wrap">
+          <input id="searchInput" class="search-input" type="text"
+                 placeholder="Search English or Vietnamese word…"/>
+          <button type="button" class="mic-btn" id="micBtn"
+                  aria-label="Speech search" aria-pressed="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 14c1.66 0 3-1.34 3-3V7a3 3 0 0 0-6 0v4c0 1.66 1.34 3 3 3zm5-3a1 1 0 0 1 2 0 7 7 0 0 1-6 6.93V20h2a1 1 0 1 1 0 2H9a1 1 0 1 1 0-2h2v-2.07A7 7 0 0 1 5 11a1 1 0 0 1 2 0 5 5 0 0 0 10 0z"/>
+            </svg>
+          </button>
+        </div>
       </div>
 
       <div id="entries"></div>
@@ -502,6 +549,7 @@ const unitTitle   = document.getElementById("unitTitle");
 const backBtn     = document.getElementById("backBtn");
 const headerTitle = document.getElementById("headerTitle");
 const searchInput = document.getElementById("searchInput");
+const micBtn      = document.getElementById("micBtn");
 
 document.querySelector(".units").addEventListener("click", e=>{
   const btn = e.target.closest(".unit-btn"); if(!btn) return;
@@ -734,6 +782,57 @@ function filterEntries(q){
     c.style.display = match ? "" : "none";
   });
 }
+
+/* ---------- SPEECH TO TEXT (MIC BUTTON) ---------- */
+let recognition = null;
+let isListening = false;
+
+if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SpeechRec();
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.lang = navigator.language || 'en-US';
+
+  recognition.addEventListener('start', () => {
+    isListening = true;
+    micBtn.classList.add('listening');
+    micBtn.setAttribute('aria-pressed','true');
+  });
+
+  recognition.addEventListener('end', () => {
+    isListening = false;
+    micBtn.classList.remove('listening');
+    micBtn.setAttribute('aria-pressed','false');
+  });
+
+  recognition.addEventListener('result', (event) => {
+    const transcript = Array.from(event.results)
+      .map(r => r[0].transcript)
+      .join(' ');
+    searchInput.value = transcript;
+    filterEntries(transcript);
+  });
+
+  recognition.addEventListener('error', (event) => {
+    console.error('Speech recognition error:', event.error);
+    isListening = false;
+    micBtn.classList.remove('listening');
+    micBtn.setAttribute('aria-pressed','false');
+  });
+}
+
+micBtn.addEventListener('click', () => {
+  if (!recognition) {
+    alert("Speech search is not supported in this browser.");
+    return;
+  }
+  if (isListening) {
+    recognition.stop();
+  } else {
+    recognition.start();
+  }
+});
 
 /* ---------- UTIL ---------- */
 function escapeHTML(s){
